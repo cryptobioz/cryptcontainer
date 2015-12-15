@@ -21,7 +21,7 @@ To open a container named *MyFile*, run : `# cryptcontainer -o MyFile`.
 
 ### Close a container #
 
-To close a container with the ID **dKte5gsCaN**, run : `# cryptcontainer -d dKte5gsCaN`.
+To close a container with the ID *dKte5gsCaN*, run : `# cryptcontainer -d dKte5gsCaN`.
 
 ### List opened containers #
 
