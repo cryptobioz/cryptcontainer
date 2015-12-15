@@ -81,8 +81,8 @@ then
         echo "Options :"
         echo "      -c MyFile 1000 => Create new container of 1000Mo (1Go) into MyFile file."
         echo "      -o MyFile      => Mount the container MyFile."
-        echo "      -d MyFile      => Unmount the container MyFile."
-        echo "      -l             => List mounted container."
+        echo "      -d dKte5gsCaN  => Unmount the container with the ID dKte5gsCaN."
+        echo "      -l             => List mounted container with their IDs."
     fi
 else
     echo "Error"
