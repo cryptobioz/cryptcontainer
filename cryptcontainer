@@ -25,6 +25,57 @@ function test {
     return $status
 }
 
+# Function to display help menu
+function help_menu {
+    echo "Usage : cryptcontainer [OPTION] ARGUMENT"
+    echo "Options :"
+    echo "      -c MyFile 1000 => Create new container of 1000Mo (1Go) into MyFile file."
+    echo "      -o MyFile      => Mount the container MyFile."
+    echo "      -d dKte5gsCaN  => Unmount the container with the ID dKte5gsCaN."
+    echo "      -l             => List mounted container with their IDs."
+}
+
+# Function to create a container
+function create_container {
+    map=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1`
+    echo -e "\n[1/4] Creating container ...\n"
+    test dd if=/dev/urandom of=$1 bs=1M count=$2
+    echo -e "\n[2/4] Encrypting container ..."
+    test cryptsetup luksFormat -c aes-xts-plain64 -s 512 -h sha512 $1
+    echo -e "\n[3/4] Formatting container ...\n"
+    test cryptsetup luksOpen $1 enc$map
+    test mkfs.ext4 -j /dev/mapper/enc$map
+    test e2fsck -f /dev/mapper/enc$map
+    echo -e "\n[4/4] Clearing ...\n"
+    test cryptsetup luksClose /dev/mapper/enc$map
+    echo "Container successfully created."
+}
+
+# Function to open a container
+function open_container {
+    map=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1`
+    echo "Opening container ..."
+    test cryptsetup luksOpen $1 enc$map
+    test mkdir /media/enc$map
+    test mount /dev/mapper/enc$map /media/enc$map
+    echo "Container mounted on /media/enc$map."
+}
+
+# Function to destroy a container
+function destroy_container {
+    echo "Close container ..."
+    test umount /media/enc$1
+    test cryptsetup luksClose enc$1
+    test rm -r /media/enc$1
+    echo "Container dismounted."
+}
+
+# Function to list opened containers
+function list_opened_containers {
+    echo "ID"
+    echo `ls /media/ | grep -oP "^enc\K([A-Za-z0-9]+)"`
+}
+
 
 # Check if root
 if [[ $EUID -ne 0 ]]; then
@@ -34,56 +85,28 @@ fi
 
 
 
-if [ $# -eq 3 ]
-then
-    if [ $1 = "-c" ]
-    then
-        map=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1`
-        echo -e "\n[1/4] Creating container ...\n"
-        test dd if=/dev/urandom of=$2 bs=1M count=$3
-        echo -e "\n[2/4] Encrypting container ..."
-        test cryptsetup luksFormat -c aes-xts-plain64 -s 512 -h sha512 $2
-        echo -e "\n[3/4] Formatting container ...\n"
-        test cryptsetup luksOpen $2 enc$map
-        test mkfs.ext4 -j /dev/mapper/enc$map
-        test e2fsck -f /dev/mapper/enc$map
-        echo -e "\n[4/4] Clearing ...\n"
-        test cryptsetup luksClose /dev/mapper/enc$map
-        echo "Container successfully created."
-    fi
-elif [ $# -eq 2 ]
-then
-    if [ $1 = "-o" ]
-    then
-        map=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1`
-        echo "Opening container ..."
-        test cryptsetup luksOpen $2 enc$map
-        test mkdir /media/enc$map
-        test mount /dev/mapper/enc$map /media/enc$map
-        echo "Container mounted on /media/enc$map."
-    elif [ $1 = "-d" ]
-    then
-        echo "Close container ..."
-        test umount /media/enc$2
-        test cryptsetup luksClose enc$2
-        test rm -r /media/enc$2
-        echo "Container dismounted."
-    fi
-elif [ $# -eq 1 ]
-then
-    if [ $1 = "-l" ]
-    then
-        echo "ID"
-        echo `ls /media/ | grep -oP "^enc\K([A-Za-z0-9]+)"`
-    elif [ $1 = "-h" ]
-    then
-        echo "Usage : cryptcontainer [OPTION] ARGUMENT"
-        echo "Options :"
-        echo "      -c MyFile 1000 => Create new container of 1000Mo (1Go) into MyFile file."
-        echo "      -o MyFile      => Mount the container MyFile."
-        echo "      -d dKte5gsCaN  => Unmount the container with the ID dKte5gsCaN."
-        echo "      -l             => List mounted container with their IDs."
-    fi
-else
-    echo "Error"
-fi
+while getopts "hlc:d:o:" option
+do
+    case $option in
+        h)
+            help_menu
+            exit 0
+            ;;
+        c)
+            create_container $2 $3
+            exit 0
+            ;;
+        d)
+            destroy_container $OPTARG
+            exit 0
+            ;;
+        o)
+            open_container $OPTARG
+            exit 0
+            ;;
+        l)
+            list_opened_containers
+            exit 0
+            ;;
+    esac
+done
