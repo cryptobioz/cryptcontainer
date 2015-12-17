@@ -26,9 +26,3 @@ To close a container with the ID *dKte5gsCaN*, run : `# cryptcontainer -d dKte5g
 ### List opened containers #
 
 To list opened containers, run : `# cryptcontainer -l`
-
-
-/!\ CAUTION /!\
----------------
-
-**Do not use this program in production or to protect really important data. This script is still in developement, there are bugs !**
