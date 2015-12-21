@@ -41,7 +41,7 @@ function create_container {
     echo -e "\n[1/4] Creating container ...\n"
     test dd if=/dev/urandom of=$1 bs=1M count=$2
     echo -e "\n[2/4] Encrypting container ..."
-    test cryptsetup luksFormat -c aes-xts-plain64 -s 512 -h sha512 $1
+    test cryptsetup luksFormat -c $cipher -s $hash -h sha512 $1
     echo -e "\n[3/4] Formatting container ...\n"
     test cryptsetup luksOpen $1 enc$map
     test mkfs.ext4 -j /dev/mapper/enc$map
@@ -84,17 +84,19 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 
+# Variables
+cipher=aes-xts-plain64
+hash=512
 
-while getopts "hlc:d:o:" option
+while getopts "hln:d:o:c:s:" option
 do
     case $option in
         h)
             help_menu
-            exit 0
             ;;
-        c)
-            create_container $2 $3
-            exit 0
+        n)
+            shift $(( OPTIND - 1 ))
+            create_container $OPTARG $1
             ;;
         d)
             destroy_container $OPTARG
@@ -107,6 +109,14 @@ do
         l)
             list_opened_containers
             exit 0
+            ;;
+        c)
+            # Set cipher
+            cipher=$OPTARG
+            ;;
+        s)
+            # Set hash
+            hash=$OPTARG
             ;;
     esac
 done
