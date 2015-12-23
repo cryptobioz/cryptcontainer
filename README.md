@@ -30,7 +30,9 @@ To list opened containers, run : `# cryptcontainer -l`
 ### Advanced features #
 
 You can choose which cipher you want by using the argument **-c** : `# cryptcontainer -c twofish-cbc -n MyFile 1000`
+
 *In this case, your container will be encrypted with the TwoFish algorithm and use the default hash size, 512.*
 
 However, you can also choose the size of the hash by using the argument **-s** : `# cryptcontainer -s 256 -n MyFile 1000`
+
 *In this case, your container will be encrypted with the default cipher, aes-xts-plain64, and use a hash size equal to 256 bits.*
